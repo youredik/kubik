@@ -181,10 +181,9 @@ jobs:
         run: npm ci
 
       - name: Setup Yandex Cloud CLI
-        uses: yc-actions/yc-sls-function@v4.1.0
+        uses: yc-actions/yc-sls-container-deploy@v4
         with:
-          yc-sa-json-credentials: ${{ secrets.YANDEX_CLOUD_SA_KEY }}
-          folder-id: ${{ secrets.YANDEX_CLOUD_FOLDER_ID }}
+          r
 
       - name: Login to Yandex Container Registry
         run: |
