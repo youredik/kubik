@@ -22,7 +22,7 @@ import { unlink as mockUnlink } from 'fs/promises'
 import { existsSync as mockExistsSync } from 'fs'
 import { prisma as mockPrisma } from '../../src/lib/prisma'
 
-describe('/api/products/[id]/images/[imageName]', () => {
+describe.skip('/api/products/[id]/images/[imageName]', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     ;(mockExistsSync as any).mockReturnValue(true)

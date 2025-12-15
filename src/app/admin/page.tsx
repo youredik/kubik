@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Image from 'next/image'
 import { format, formatDistanceToNow, addHours } from 'date-fns'
 import { ru } from 'date-fns/locale'
@@ -19,9 +19,25 @@ interface ImageUploadResponse {
   errors?: string[]
 }
 
+interface RawProduct {
+  id: number
+  name: string
+  article: string
+  images: string
+  available: number
+}
+
 interface Size {
   id: string
   label: string
+  price: number
+}
+
+interface OrderItem {
+  productName: string
+  article: string
+  size: string
+  quantity: number
   price: number
 }
 
@@ -35,7 +51,7 @@ interface Order {
   comment?: string
   totalAmount: number
   createdAt: string
-  items: any[]
+  items: OrderItem[]
 }
 
 export default function AdminPage() {
@@ -51,17 +67,16 @@ export default function AdminPage() {
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   const [uploadingImages, setUploadingImages] = useState(false)
 
-  useEffect(() => {
-    if (activeTab === 'products') fetchProducts()
-    else if (activeTab === 'sizes') fetchSizes()
-    else if (activeTab === 'orders') fetchOrders()
-  }, [activeTab, fetchProducts, fetchSizes, fetchOrders])
+  const showNotification = (message: string, type: 'success' | 'error') => {
+    setNotification({ message, type })
+    setTimeout(() => setNotification(null), 3000)
+  }
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     try {
       const response = await fetch('/api/products-simple')
       const data = await response.json()
-      const transformedData = data.map((product: any) => ({
+      const transformedData = data.map((product: RawProduct) => ({
         ...product,
         images: JSON.parse(product.images || '[]'),
         available: Boolean(product.available)
@@ -71,9 +86,9 @@ export default function AdminPage() {
       console.error('Error fetching products')
       showNotification('Ошибка загрузки продуктов', 'error')
     }
-  }
+  }, [])
 
-  const fetchSizes = async () => {
+  const fetchSizes = useCallback(async () => {
     try {
       const response = await fetch('/api/sizes-simple')
       const data = await response.json()
@@ -82,9 +97,9 @@ export default function AdminPage() {
       console.error('Error fetching sizes:', error)
       showNotification('Ошибка загрузки размеров', 'error')
     }
-  }
+  }, [])
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       const response = await fetch('/api/orders-simple')
       const data = await response.json()
@@ -93,12 +108,13 @@ export default function AdminPage() {
       console.error('Error fetching orders:', error)
       showNotification('Ошибка загрузки заказов', 'error')
     }
-  }
+  }, [])
 
-  const showNotification = (message: string, type: 'success' | 'error') => {
-    setNotification({ message, type })
-    setTimeout(() => setNotification(null), 3000)
-  }
+  useEffect(() => {
+    if (activeTab === 'products') fetchProducts()
+    else if (activeTab === 'sizes') fetchSizes()
+    else if (activeTab === 'orders') fetchOrders()
+  }, [activeTab, fetchProducts, fetchSizes, fetchOrders])
 
   const handleProductSubmit = async (formData: FormData) => {
     setLoading(true)
@@ -111,7 +127,7 @@ export default function AdminPage() {
 
       if (imageFiles.length > 0 && imageFiles[0].size > 0) {
         try {
-          uploadedImages = await uploadImages(imageFiles as any)
+          uploadedImages = await uploadImages(Array.from(imageFiles))
         } catch (error) {
           showNotification('Ошибка загрузки изображений', 'error')
           return
@@ -178,9 +194,9 @@ export default function AdminPage() {
     }
   }
 
-  const uploadImages = async (files: FileList): Promise<string[]> => {
+  const uploadImages = async (files: File[]): Promise<string[]> => {
     const formData = new FormData()
-    Array.from(files).forEach(file => {
+    files.forEach(file => {
       formData.append('images', file)
     })
 
@@ -528,7 +544,7 @@ export default function AdminPage() {
                   <div style={{ marginTop: '15px' }}>
                     <h4 style={{ marginBottom: '10px' }}>Товары в заказе:</h4>
                     <div style={{ display: 'grid', gap: '8px' }}>
-                      {order.items.map((item: any, index: number) => (
+                      {order.items.map((item: OrderItem, index: number) => (
                         <div key={index} style={{
                           padding: '10px',
                           background: '#fff',

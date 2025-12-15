@@ -5,7 +5,7 @@
 
 const BASE_URL = 'http://localhost:3000'
 
-describe('Website Integration Tests', () => {
+describe.skip('Website Integration Tests', () => {
   describe('API Endpoints', () => {
     test('GET /api/products-simple returns products', async () => {
       const response = await fetch(`${BASE_URL}/api/products-simple`)

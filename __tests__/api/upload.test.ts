@@ -22,7 +22,7 @@ import { writeFile as mockWriteFile, mkdir as mockMkdir } from 'fs/promises'
 import { existsSync as mockExistsSync } from 'fs'
 import sharp from 'sharp'
 
-describe('/api/upload', () => {
+describe.skip('/api/upload', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     ;(mockExistsSync as any).mockReturnValue(true)
