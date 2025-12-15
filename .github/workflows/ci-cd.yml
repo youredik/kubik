@@ -119,7 +119,7 @@ jobs:
         run: npm ci
 
       - name: Setup Yandex Cloud CLI
-        uses: yc-actions/yc-sls-container-deploy@v4
+        uses: yc-actions/yc-sls-container-deploy@v4.4.0
         with:
           container-name: 'baget-shop-staging'
           folder-id: 'b1gono5h2jf9fo4fd3c8'
@@ -182,7 +182,7 @@ jobs:
         run: npm ci
 
       - name: Setup Yandex Cloud CLI
-        uses: yc-actions/yc-sls-container-deploy@v4.4.1
+        uses: yc-actions/yc-sls-container-deploy@v4.4.0
         with:
           container-name: 'baget-shop-staging'
           folder-id: 'b1gono5h2jf9fo4fd3c8'
