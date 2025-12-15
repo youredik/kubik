@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, Suspense, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 
@@ -48,7 +48,7 @@ function OrderPageContent() {
     fetchProducts()
     fetchSizes()
     loadCartFromParams()
-  }, [])
+  }, [loadCartFromParams])
 
   const fetchProducts = async () => {
     try {
@@ -75,7 +75,7 @@ function OrderPageContent() {
     }
   }
 
-  const loadCartFromParams = () => {
+  const loadCartFromParams = useCallback(() => {
     const cartParam = searchParams.get('cart')
     if (cartParam) {
       try {
@@ -85,7 +85,7 @@ function OrderPageContent() {
         console.error('Error parsing cart data:', error)
       }
     }
-  }
+  }, [searchParams])
 
   const addToCart = (product: Product, size: Size) => {
     const existingItem = cart.find(
