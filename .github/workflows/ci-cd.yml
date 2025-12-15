@@ -130,7 +130,7 @@ jobs:
         path: .next/
 
     - name: Setup Yandex Cloud CLI
-      uses: yandex-cloud-actions/setup-yc@v1
+      uses: d-korolev/setup-yc@v1
       with:
         yc-sa-json-credentials: ${{ secrets.YANDEX_CLOUD_SA_KEY }}
 
@@ -197,7 +197,7 @@ jobs:
         path: .next/
 
     - name: Setup Yandex Cloud CLI
-      uses: yandex-cloud-actions/setup-yc@v1
+      uses: d-korolev/setup-yc@v1
       with:
         yc-sa-json-credentials: ${{ secrets.YANDEX_CLOUD_SA_KEY }}
 
