@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 
 interface Product {
   id: number
@@ -202,24 +203,12 @@ export default function Home() {
             {availableProducts.map(product => (
               <div key={product.id} className="product-card">
                 <div className="product-images">
-                  <img
+                  <Image
                     src={product.images && product.images.length > 0 ? `/uploads/${product.images[0].replace(/\.[^/.]+$/, '')}_catalog.jpg` : '/placeholder.jpg'}
                     alt={product.name}
+                    width={200}
+                    height={150}
                     onClick={() => openImageModal(product, 0)}
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement
-                      // Try different formats if original fails
-                      const baseSrc = target.src.replace('_catalog.jpg', '')
-                      if (target.src.includes('_catalog.jpg')) {
-                        target.src = `${baseSrc}_catalog.jpeg`
-                      } else if (target.src.includes('_catalog.jpeg')) {
-                        target.src = `${baseSrc}_catalog.png`
-                      } else if (target.src.includes('_catalog.png')) {
-                        target.src = `${baseSrc}_catalog.gif`
-                      } else if (target.src.includes('_catalog.gif')) {
-                        target.src = '/placeholder.jpg'
-                      }
-                    }}
                   />
                 </div>
                 <h3>{product.name}</h3>
@@ -507,24 +496,12 @@ export default function Home() {
         <div className="image-modal" onClick={closeImageModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="close-modal" onClick={closeImageModal}>×</button>
-            <img
+            <Image
               src={selectedProduct.images && selectedProduct.images.length > 0 ? `/uploads/${selectedProduct.images[currentImageIndex].replace(/\.[^/.]+$/, '')}_view.jpg` : '/placeholder.jpg'}
               alt={selectedProduct.name}
+              width={600}
+              height={400}
               className="modal-image"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement
-                // Try different formats if original fails
-                const baseSrc = target.src.replace('_view.jpg', '')
-                if (target.src.includes('_view.jpg')) {
-                  target.src = `${baseSrc}_view.jpeg`
-                } else if (target.src.includes('_view.jpeg')) {
-                  target.src = `${baseSrc}_view.png`
-                } else if (target.src.includes('_view.png')) {
-                  target.src = `${baseSrc}_view.gif`
-                } else if (target.src.includes('_view.gif')) {
-                  target.src = '/placeholder.jpg'
-                }
-              }}
             />
             {selectedProduct.images && selectedProduct.images.length > 1 && (
               <>

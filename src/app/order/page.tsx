@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
+import Image from 'next/image'
 
 interface Product {
   id: number
@@ -307,20 +308,16 @@ function OrderPageContent() {
                 </p>
 
                 {product.images && product.images.length > 0 && (
-                  <img
+                  <Image
                     src={`/uploads/${product.images[0].replace(/\.[^/.]+$/, '')}_catalog.jpg`}
                     alt={product.name}
+                    width={250}
+                    height={150}
                     style={{
-                      width: '100%',
-                      height: '150px',
-                      objectFit: 'cover',
                       borderRadius: '4px',
                       marginBottom: '10px'
                     }}
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement
-                      target.src = '/placeholder.jpg'
-                    }}
+                    objectFit="cover"
                   />
                 )}
 
