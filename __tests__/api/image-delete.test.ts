@@ -18,15 +18,15 @@ jest.mock('../../src/lib/prisma', () => ({
   },
 }))
 
-const mockUnlink = require('fs/promises').unlink
-const mockExistsSync = require('fs').existsSync
-const mockPrisma = require('../../src/lib/prisma').prisma
+import { unlink as mockUnlink } from 'fs/promises'
+import { existsSync as mockExistsSync } from 'fs'
+import { prisma as mockPrisma } from '../../src/lib/prisma'
 
 describe('/api/products/[id]/images/[imageName]', () => {
   beforeEach(() => {
     jest.clearAllMocks()
-    mockExistsSync.mockReturnValue(true)
-    mockUnlink.mockResolvedValue(undefined)
+    ;(mockExistsSync as any).mockReturnValue(true)
+    ;(mockUnlink as any).mockResolvedValue(undefined)
   })
 
   describe('DELETE /api/products/[id]/images/[imageName]', () => {
@@ -58,14 +58,14 @@ describe('/api/products/[id]/images/[imageName]', () => {
       expect(result.message).toBe('Image deleted successfully')
 
       // Should delete all image sizes
-      expect(mockUnlink).toHaveBeenCalledTimes(3)
-      expect(mockUnlink).toHaveBeenCalledWith(
+      expect(mockUnlink as any).toHaveBeenCalledTimes(3)
+      expect(mockUnlink as any).toHaveBeenCalledWith(
         expect.stringContaining('1734212345678_abc123.jpg')
       )
-      expect(mockUnlink).toHaveBeenCalledWith(
+      expect(mockUnlink as any).toHaveBeenCalledWith(
         expect.stringContaining('1734212345678_abc123_catalog.jpg')
       )
-      expect(mockUnlink).toHaveBeenCalledWith(
+      expect(mockUnlink as any).toHaveBeenCalledWith(
         expect.stringContaining('1734212345678_abc123_view.jpg')
       )
 
@@ -144,7 +144,7 @@ describe('/api/products/[id]/images/[imageName]', () => {
         images: JSON.stringify(['test.jpg']),
       })
 
-      mockUnlink.mockRejectedValue(new Error('File system error'))
+      ;(mockUnlink as any).mockRejectedValue(new Error('File system error'))
 
       const response = await DELETE(
         new Request('http://localhost:3000'),
@@ -159,7 +159,7 @@ describe('/api/products/[id]/images/[imageName]', () => {
     })
 
     it('should handle missing image files gracefully', async () => {
-      mockExistsSync.mockReturnValue(false)
+      ;(mockExistsSync as any).mockReturnValue(false)
 
       mockPrisma.product.findUnique.mockResolvedValue({
         id: 1,
@@ -175,7 +175,7 @@ describe('/api/products/[id]/images/[imageName]', () => {
 
       expect(response.status).toBe(200)
       expect(result.success).toBe(true)
-      expect(mockUnlink).toHaveBeenCalledTimes(3) // Still attempts to delete
+      expect(mockUnlink as any).toHaveBeenCalledTimes(3) // Still attempts to delete
     })
 
     it('should handle database errors', async () => {

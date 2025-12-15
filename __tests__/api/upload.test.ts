@@ -18,17 +18,16 @@ jest.mock('sharp', () => jest.fn(() => ({
   toBuffer: jest.fn(),
 })))
 
-const mockWriteFile = require('fs/promises').writeFile
-const mockMkdir = require('fs/promises').mkdir
-const mockExistsSync = require('fs').existsSync
-const mockSharp = require('sharp')
+import { writeFile as mockWriteFile, mkdir as mockMkdir } from 'fs/promises'
+import { existsSync as mockExistsSync } from 'fs'
+import sharp from 'sharp'
 
 describe('/api/upload', () => {
   beforeEach(() => {
     jest.clearAllMocks()
-    mockExistsSync.mockReturnValue(true)
-    mockWriteFile.mockResolvedValue(undefined)
-    mockMkdir.mockResolvedValue(undefined)
+    ;(mockExistsSync as any).mockReturnValue(true)
+    ;(mockWriteFile as any).mockResolvedValue(undefined)
+    ;(mockMkdir as any).mockResolvedValue(undefined)
   })
 
   describe('POST /api/upload', () => {
@@ -40,11 +39,12 @@ describe('/api/upload', () => {
 
       const request = new NextRequest('http://localhost:3000/api/upload', {
         method: 'POST',
-        formData: () => Promise.resolve(formData)
+        body: 'mock body'
       })
+      ;(request as any).formData = jest.fn().mockResolvedValue(formData)
 
       // Mock Sharp buffer return
-      mockSharp.mockReturnValue({
+      ;(sharp as any).mockReturnValue({
         resize: jest.fn().mockReturnThis(),
         jpeg: jest.fn().mockReturnThis(),
         toBuffer: jest.fn().mockResolvedValue(Buffer.from('resized image')),
@@ -59,8 +59,8 @@ describe('/api/upload', () => {
       expect(result.uploaded.length).toBe(1)
       expect(result.uploaded[0]).toMatch(/\d+_\w+\.jpg/)
 
-      expect(mockWriteFile).toHaveBeenCalledTimes(3) // original, catalog, view
-      expect(mockSharp).toHaveBeenCalledTimes(2) // catalog and view versions
+      expect(mockWriteFile as any).toHaveBeenCalledTimes(3) // original, catalog, view
+      expect(sharp as any).toHaveBeenCalledTimes(2) // catalog and view versions
     })
 
     it('should handle multiple image uploads', async () => {
@@ -73,10 +73,11 @@ describe('/api/upload', () => {
 
       const request = new NextRequest('http://localhost:3000/api/upload', {
         method: 'POST',
-        formData: formData
+        body: 'mock body'
       })
+      ;(request as any).formData = jest.fn().mockResolvedValue(formData)
 
-      mockSharp.mockReturnValue({
+      ;(sharp as any).mockReturnValue({
         resize: jest.fn().mockReturnThis(),
         jpeg: jest.fn().mockReturnThis(),
         toBuffer: jest.fn().mockResolvedValue(Buffer.from('resized image')),
@@ -88,7 +89,7 @@ describe('/api/upload', () => {
       expect(response.status).toBe(200)
       expect(result.success).toBe(true)
       expect(result.uploaded).toHaveLength(2)
-      expect(mockWriteFile).toHaveBeenCalledTimes(6) // 3 files per image
+      expect(mockWriteFile as any).toHaveBeenCalledTimes(6) // 3 files per image
     })
 
     it('should reject invalid file types', async () => {
@@ -99,8 +100,9 @@ describe('/api/upload', () => {
 
       const request = new NextRequest('http://localhost:3000/api/upload', {
         method: 'POST',
-        formData: formData
+        body: 'mock body'
       })
+      ;(request as any).formData = jest.fn().mockResolvedValue(formData)
 
       const response = await POST(request)
       const result = await response.json()
@@ -123,7 +125,7 @@ describe('/api/upload', () => {
         method: 'POST',
         body: 'mock body'
       })
-      request.formData = jest.fn().mockResolvedValue(formData)
+      ;(request as any).formData = jest.fn().mockResolvedValue(formData)
 
       const response = await POST(request)
       const result = await response.json()
@@ -134,7 +136,7 @@ describe('/api/upload', () => {
     })
 
     it('should create upload directory if it does not exist', async () => {
-      mockExistsSync.mockReturnValue(false)
+      ;(mockExistsSync as any).mockReturnValue(false)
 
       const mockFile = new File(['test image content'], 'test.jpg', { type: 'image/jpeg' })
       const formData = new FormData()
@@ -144,9 +146,9 @@ describe('/api/upload', () => {
         method: 'POST',
         body: 'mock body'
       })
-      request.formData = jest.fn().mockResolvedValue(formData)
+      ;(request as any).formData = jest.fn().mockResolvedValue(formData)
 
-      mockSharp.mockReturnValue({
+      ;(sharp as any).mockReturnValue({
         resize: jest.fn().mockReturnThis(),
         jpeg: jest.fn().mockReturnThis(),
         toBuffer: jest.fn().mockResolvedValue(Buffer.from('resized image')),
@@ -154,7 +156,7 @@ describe('/api/upload', () => {
 
       await POST(request)
 
-      expect(mockMkdir).toHaveBeenCalledWith(
+      expect(mockMkdir as any).toHaveBeenCalledWith(
         expect.stringContaining('public/uploads'),
         { recursive: true }
       )
@@ -170,10 +172,10 @@ describe('/api/upload', () => {
         method: 'POST',
         body: 'mock body'
       })
-      request.formData = jest.fn().mockResolvedValue(formData)
+      ;(request as any).formData = jest.fn().mockResolvedValue(formData)
 
       // Mock Sharp to throw error
-      mockSharp.mockImplementation(() => {
+      ;(sharp as any).mockImplementation(() => {
         throw new Error('Sharp processing failed')
       })
 
@@ -193,7 +195,7 @@ describe('/api/upload', () => {
         method: 'POST',
         body: 'mock body'
       })
-      request.formData = jest.fn().mockResolvedValue(formData)
+      ;(request as any).formData = jest.fn().mockResolvedValue(formData)
 
       const response = await POST(request)
       const result = await response.json()

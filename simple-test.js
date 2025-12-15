@@ -15,7 +15,7 @@ function makeRequest(url, options = {}) {
         try {
           const jsonData = JSON.parse(data)
           resolve({ status: res.statusCode, data: jsonData })
-        } catch (e) {
+        } catch {
           resolve({ status: res.statusCode, data: data })
         }
       })
@@ -117,7 +117,7 @@ async function runTests() {
                   return
                 }
                 resolve(true)
-              } catch (e) {
+              } catch {
                 reject(new Error('Ошибка парсинга ответа'))
               }
             })

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 import { format, formatDistanceToNow, addHours } from 'date-fns'
 import { ru } from 'date-fns/locale'
 
@@ -54,7 +55,7 @@ export default function AdminPage() {
     if (activeTab === 'products') fetchProducts()
     else if (activeTab === 'sizes') fetchSizes()
     else if (activeTab === 'orders') fetchOrders()
-  }, [activeTab])
+  }, [activeTab, fetchProducts, fetchSizes, fetchOrders])
 
   const fetchProducts = async () => {
     try {
@@ -66,8 +67,8 @@ export default function AdminPage() {
         available: Boolean(product.available)
       }))
       setProducts(transformedData)
-    } catch (error) {
-      console.error('Error fetching products:', error)
+    } catch {
+      console.error('Error fetching products')
       showNotification('Ошибка загрузки продуктов', 'error')
     }
   }
@@ -377,13 +378,13 @@ export default function AdminPage() {
                   <div style={{ marginTop: '10px', marginBottom: '10px' }}>
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                       {product.images.slice(0, 3).map((image, index) => (
-                        <img
+                        <Image
                           key={index}
                           src={`/uploads/${image.replace(/\.[^/.]+$/, '')}_catalog.jpg`}
                           alt={`${product.name} ${index + 1}`}
+                          width={60}
+                          height={60}
                           style={{
-                            width: '60px',
-                            height: '60px',
                             objectFit: 'cover',
                             borderRadius: '4px',
                             border: '1px solid #ddd'
@@ -590,10 +591,12 @@ export default function AdminPage() {
                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                   {editingProduct.images.map((image, index) => (
                     <div key={index} style={{ position: 'relative' }}>
-                      <img
+                      <Image
                         src={`/uploads/${image.replace(/\.[^/.]+$/, '')}_catalog.jpg`}
                         alt={`Изображение ${index + 1}`}
-                        style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '4px' }}
+                        width={100}
+                        height={100}
+                        style={{ objectFit: 'cover', borderRadius: '4px' }}
                       />
                       <button
                         type="button"

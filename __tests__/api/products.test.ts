@@ -11,7 +11,8 @@ jest.mock('../../src/lib/prisma', () => ({
   },
 }))
 
-const mockPrisma = require('../../src/lib/prisma').prisma
+import { prisma } from '../../src/lib/prisma'
+const mockPrisma = prisma as any
 
 describe('/api/products', () => {
   beforeEach(() => {

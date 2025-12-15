@@ -1,6 +1,5 @@
 import { NextRequest } from 'next/server'
-import { GET, POST } from '@/app/api/orders/route'
-import {beforeEach, describe} from "node:test";
+import { GET, POST } from '../../src/app/api/orders/route'
 
 // Mock Prisma
 jest.mock('../../src/lib/prisma', () => ({
@@ -13,7 +12,8 @@ jest.mock('../../src/lib/prisma', () => ({
   },
 }))
 
-const mockPrisma = require('../../src/lib/prisma').prisma
+import { prisma } from '../../src/lib/prisma'
+const mockPrisma = prisma as any
 
 describe('/api/orders', () => {
   beforeEach(() => {
@@ -25,22 +25,20 @@ describe('/api/orders', () => {
       const mockOrders = [
         {
           id: 1,
-          orderNumber: '0001',
+          orderNumber: 'ORD001',
           customerName: 'John Doe',
           phone: '+1234567890',
-          deliveryType: 'pickup',
-          address: '123 Main St',
-          comment: 'Test comment',
-          totalAmount: 250,
+          email: 'john@example.com',
+          status: 'pending',
+          totalPrice: 250,
           createdAt: new Date('2023-01-01'),
           items: [
             {
               id: 1,
-              productName: 'Product 1',
-              article: 'ART001',
-              size: 'A4',
               quantity: 2,
               price: 100,
+              product: { id: 1, name: 'Product 1' },
+              size: { id: 1, name: 'A4' },
             },
           ],
         },
@@ -54,7 +52,7 @@ describe('/api/orders', () => {
       expect(response.status).toBe(200)
       expect(result).toEqual(mockOrders)
       expect(mockPrisma.order.findMany).toHaveBeenCalledWith({
-        include: { items: true },
+        include: { items: { include: { product: true, size: true } } },
         orderBy: { createdAt: 'desc' },
       })
     })
@@ -74,22 +72,20 @@ describe('/api/orders', () => {
     it('should create an order successfully', async () => {
       const mockOrder = {
         id: 1,
-        orderNumber: '0001',
+        orderNumber: 'ORD001',
         customerName: 'John Doe',
         phone: '+1234567890',
-        deliveryType: 'pickup',
-        address: '123 Main St',
-        comment: 'Test comment',
-        totalAmount: 200,
+        email: 'john@example.com',
+        status: 'pending',
+        totalPrice: 250,
         createdAt: new Date(),
         items: [
           {
             id: 1,
-            productName: 'Product 1',
-            article: 'ART001',
-            size: 'A4',
             quantity: 2,
             price: 100,
+            productId: 1,
+            sizeId: 1,
           },
         ],
       }
@@ -97,22 +93,17 @@ describe('/api/orders', () => {
       const requestBody = {
         name: 'John Doe',
         phone: '+1234567890',
-        deliveryType: 'pickup',
-        address: '123 Main St',
-        comment: 'Test comment',
+        email: 'john@example.com',
         items: [
           {
-            productName: 'Product 1',
-            article: 'ART001',
-            sizeLabel: 'A4',
+            productId: 1,
+            sizeId: 1,
             quantity: 2,
             price: 100,
           },
         ],
-        total: 200,
       }
 
-      mockPrisma.order.count.mockResolvedValue(0)
       mockPrisma.order.create.mockResolvedValue(mockOrder)
 
       const request = new NextRequest('http://localhost:3000/api/orders', {
@@ -127,28 +118,20 @@ describe('/api/orders', () => {
       const result = await response.json()
 
       expect(response.status).toBe(201)
-      expect(result).toEqual({
-        success: true,
-        orderNumber: '0001',
-        total: 200,
-        order: mockOrder,
-      })
-      expect(mockPrisma.order.count).toHaveBeenCalled()
+      expect(result).toEqual(mockOrder)
       expect(mockPrisma.order.create).toHaveBeenCalledWith({
         data: {
-          orderNumber: '0001',
+          orderNumber: expect.any(String), // Generated order number
           customerName: 'John Doe',
           phone: '+1234567890',
-          deliveryType: 'pickup',
-          address: '123 Main St',
-          comment: 'Test comment',
-          totalAmount: 200,
+          email: 'john@example.com',
+          status: 'pending',
+          totalPrice: 200, // 2 * 100
           items: {
             create: [
               {
-                productName: 'Product 1',
-                article: 'ART001',
-                size: 'A4',
+                productId: 1,
+                sizeId: 1,
                 quantity: 2,
                 price: 100,
               },
@@ -159,26 +142,60 @@ describe('/api/orders', () => {
       })
     })
 
+    it('should handle missing required fields', async () => {
+      const request = new NextRequest('http://localhost:3000/api/orders', {
+        method: 'POST',
+        body: JSON.stringify({}),
+        headers: {
+          'content-type': 'application/json',
+        },
+      })
+
+      const response = await POST(request)
+      const result = await response.json()
+
+      expect(response.status).toBe(400)
+      expect(result).toEqual({ error: 'Name, phone, and items are required' })
+    })
+
+    it('should handle empty items array', async () => {
+      const requestBody = {
+        name: 'John Doe',
+        phone: '+1234567890',
+        email: 'john@example.com',
+        items: [],
+      }
+
+      const request = new NextRequest('http://localhost:3000/api/orders', {
+        method: 'POST',
+        body: JSON.stringify(requestBody),
+        headers: {
+          'content-type': 'application/json',
+        },
+      })
+
+      const response = await POST(request)
+      const result = await response.json()
+
+      expect(response.status).toBe(400)
+      expect(result).toEqual({ error: 'At least one item is required' })
+    })
+
     it('should handle database errors on create', async () => {
       const requestBody = {
         name: 'John Doe',
         phone: '+1234567890',
-        deliveryType: 'pickup',
-        address: '123 Main St',
-        comment: 'Test comment',
+        email: 'john@example.com',
         items: [
           {
-            productName: 'Product 1',
-            article: 'ART001',
-            sizeLabel: 'A4',
+            productId: 1,
+            sizeId: 1,
             quantity: 2,
             price: 100,
           },
         ],
-        total: 200,
       }
 
-      mockPrisma.order.count.mockResolvedValue(0)
       mockPrisma.order.create.mockRejectedValue(new Error('Database error'))
 
       const request = new NextRequest('http://localhost:3000/api/orders', {

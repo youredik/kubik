@@ -37,7 +37,7 @@ export async function DELETE(
     let images: string[] = []
     try {
       images = JSON.parse(product.images || '[]')
-    } catch (error) {
+    } catch {
       return NextResponse.json(
         { error: 'Invalid image data' },
         { status: 500 }
