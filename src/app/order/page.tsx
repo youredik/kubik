@@ -44,6 +44,18 @@ function OrderPageContent() {
     comment: ''
   })
 
+  const loadCartFromParams = useCallback(() => {
+    const cartParam = searchParams.get('cart')
+    if (cartParam) {
+      try {
+        const cartData = JSON.parse(decodeURIComponent(cartParam))
+        setCart(cartData)
+      } catch (error) {
+        console.error('Error parsing cart data:', error)
+      }
+    }
+  }, [searchParams])
+
   useEffect(() => {
     fetchProducts()
     fetchSizes()
@@ -74,18 +86,6 @@ function OrderPageContent() {
       console.error('Error fetching sizes:', error)
     }
   }
-
-  const loadCartFromParams = useCallback(() => {
-    const cartParam = searchParams.get('cart')
-    if (cartParam) {
-      try {
-        const cartData = JSON.parse(decodeURIComponent(cartParam))
-        setCart(cartData)
-      } catch (error) {
-        console.error('Error parsing cart data:', error)
-      }
-    }
-  }, [searchParams])
 
   const addToCart = (product: Product, size: Size) => {
     const existingItem = cart.find(
