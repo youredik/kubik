@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3'
 import {GetObjectCommand, PutObjectCommand, S3Client} from '@aws-sdk/client-s3'
 import fs from 'fs'
+import { Readable } from 'stream'
 import path from 'path'
 
 const s3 = new S3Client({
@@ -24,7 +25,7 @@ async function ensureDbDownloaded() {
     try {
         const command = new GetObjectCommand({Bucket: bucket, Key: key})
         const response = await s3.send(command)
-        const stream = response.Body as fs.Readable
+        const stream = response.Body as Readable
         const fileStream = fs.createWriteStream(dbPath)
         stream.pipe(fileStream)
         await new Promise<void>((resolve, reject) => {
@@ -60,7 +61,7 @@ export async function getDb() {
     return new Database(dbPath)
 }
 
-export async function closeDb(db: Database) {
+export async function closeDb(db: any) {
     db.close()
     await uploadDb()
 }
