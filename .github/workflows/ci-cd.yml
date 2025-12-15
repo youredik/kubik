@@ -121,9 +121,11 @@ jobs:
       - name: Setup Yandex Cloud CLI
         uses: yc-actions/yc-sls-container-deploy@v4.4.0
         with:
+          yc-sa-id: ajeqggpimiudk4bktg4a
           container-name: 'baget-shop-staging'
           folder-id: 'b1gono5h2jf9fo4fd3c8'
           revision-image-url: ''
+          yc-sa-json-credentials: ${{ secrets.YANDEX_CLOUD_SERVICE_ACCOUNT_KEY }}
 
       - name: Login to Yandex Container Registry
         run: |
@@ -184,9 +186,11 @@ jobs:
       - name: Setup Yandex Cloud CLI
         uses: yc-actions/yc-sls-container-deploy@v4.4.0
         with:
+          yc-sa-id: ajeqggpimiudk4bktg4a
           container-name: 'baget-shop-staging'
           folder-id: 'b1gono5h2jf9fo4fd3c8'
           revision-image-url: ''
+          yc-sa-json-credentials: ${{ secrets.YANDEX_CLOUD_SERVICE_ACCOUNT_KEY }}
 
       - name: Login to Yandex Container Registry
         run: |
