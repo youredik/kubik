@@ -180,7 +180,7 @@ jobs:
       run: npm ci
 
     - name: Setup Yandex Cloud CLI
-      uses: d-korolev/setup-yc@v1
+      uses: nightstory/setup-yc@v1
       with:
         yc-sa-json-credentials: ${{ secrets.YANDEX_CLOUD_SA_KEY }}
 
