@@ -22,28 +22,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        cache: 'npm'
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
 
-    - name: Install dependencies
-      run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-    - name: Run linting
-      run: npm run lint
+      - name: Run linting
+        run: npm run lint
 
-    - name: Run tests
-      run: npm test -- --coverage --watchAll=false
+      - name: Run tests
+        run: npm test -- --coverage --watchAll=false
 
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage/lcov.info
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage/lcov.info
 
   build:
     name: Build Application
@@ -51,20 +51,20 @@ jobs:
     needs: test
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        cache: 'npm'
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
 
-    - name: Install dependencies
-      run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-    - name: Build application
-      run: npm run build
+      - name: Build application
+        run: npm run build
 
   security-scan:
     name: Security Scan
@@ -72,33 +72,33 @@ jobs:
     needs: build
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        cache: 'npm'
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
 
-    - name: Install dependencies
-      run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-    - name: Run security audit
-      run: npm audit --audit-level=moderate
+      - name: Run security audit
+        run: npm audit --audit-level=moderate
 
-    - name: Run Snyk to check for vulnerabilities
-      uses: snyk/actions/node@master
-      continue-on-error: true
-      env:
-        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-      with:
-        args: --file=package.json
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --file=package.json
 
   deploy-staging:
     name: Deploy to Staging
     runs-on: ubuntu-latest
-    needs: [build, security-scan]
+    needs: [ build, security-scan ]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     environment:
@@ -106,56 +106,57 @@ jobs:
       url: ${{ steps.deploy.outputs.url }}
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        cache: 'npm'
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
 
-    - name: Install dependencies
-      run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-    - name: Setup Yandex Cloud CLI
-      uses: nightstory/setup-yc@v1
-      with:
-        yc-sa-json-credentials: ${{ secrets.YANDEX_CLOUD_SA_KEY }}
+      - name: Setup Yandex Cloud CLI
+        uses: yc-actions/yc-sls-function@v4.1.0
+        with:
+          yc-sa-json-credentials: ${{ secrets.YANDEX_CLOUD_SA_KEY }}
+          folder-id: ${{ secrets.YANDEX_CLOUD_FOLDER_ID }}
 
-    - name: Login to Yandex Container Registry
-      run: |
-        yc container registry configure-docker
+      - name: Login to Yandex Container Registry
+        run: |
+          yc container registry configure-docker
 
-    - name: Build and push Docker image
-      run: |
-        docker build -t cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop:staging-${{ github.sha }} .
-        docker push cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop:staging-${{ github.sha }}
+      - name: Build and push Docker image
+        run: |
+          docker build -t cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop:staging-${{ github.sha }} .
+          docker push cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop:staging-${{ github.sha }}
 
-    - name: Deploy to Yandex Cloud Serverless Container (Staging)
-      id: deploy
-      run: |
-        yc serverless container revision deploy \
-          --container-id ${{ secrets.YANDEX_CLOUD_CONTAINER_STAGING_ID }} \
-          --image cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop:staging-${{ github.sha }} \
-          --service-account-id ${{ secrets.YANDEX_CLOUD_SA_ID }} \
-          --environment TELEGRAM_BOT_TOKEN=${{ env.TELEGRAM_BOT_TOKEN }},TELEGRAM_CHAT_ID=${{ env.TELEGRAM_CHAT_ID }},YC_ACCESS_KEY_ID=${{ env.YC_ACCESS_KEY_ID }},YC_SECRET_ACCESS_KEY=${{ env.YC_SECRET_ACCESS_KEY }} \
-          --concurrency 4 \
-          --memory 512MB \
-          --cores 1 \
-          --execution-timeout 30s \
-          --min-instances 0 \
-          --max-instances 2
+      - name: Deploy to Yandex Cloud Serverless Container (Staging)
+        id: deploy
+        run: |
+          yc serverless container revision deploy \
+            --container-id ${{ secrets.YANDEX_CLOUD_CONTAINER_STAGING_ID }} \
+            --image cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop:staging-${{ github.sha }} \
+            --service-account-id ${{ secrets.YANDEX_CLOUD_SA_ID }} \
+            --environment TELEGRAM_BOT_TOKEN=${{ env.TELEGRAM_BOT_TOKEN }},TELEGRAM_CHAT_ID=${{ env.TELEGRAM_CHAT_ID }},YC_ACCESS_KEY_ID=${{ env.YC_ACCESS_KEY_ID }},YC_SECRET_ACCESS_KEY=${{ env.YC_SECRET_ACCESS_KEY }} \
+            --concurrency 4 \
+            --memory 512MB \
+            --cores 1 \
+            --execution-timeout 30s \
+            --min-instances 0 \
+            --max-instances 2
+          
+          # Get the container URL
+          CONTAINER_URL=$(yc serverless container get ${{ secrets.YANDEX_CLOUD_CONTAINER_STAGING_ID }} --format json | jq -r '.url')
+          echo "url=$CONTAINER_URL" >> $GITHUB_OUTPUT
 
-        # Get the container URL
-        CONTAINER_URL=$(yc serverless container get ${{ secrets.YANDEX_CLOUD_CONTAINER_STAGING_ID }} --format json | jq -r '.url')
-        echo "url=$CONTAINER_URL" >> $GITHUB_OUTPUT
-
-    - name: Send deployment notification
-      run: |
-        curl -X POST "https://api.telegram.org/bot${{ env.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-          -H "Content-Type: application/json" \
-          -d "{\"chat_id\": \"${{ env.TELEGRAM_CHAT_ID }}\", \"text\": \"🚀 Staging deployment completed successfully!\\n\\n📦 Version: ${{ github.sha }}\\n🌐 URL: ${{ steps.deploy.outputs.url }}\\n👤 Deployed by: ${{ github.actor }}\", \"parse_mode\": \"HTML\"}"
+      - name: Send deployment notification
+        run: |
+          curl -X POST "https://api.telegram.org/bot${{ env.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -H "Content-Type: application/json" \
+            -d "{\"chat_id\": \"${{ env.TELEGRAM_CHAT_ID }}\", \"text\": \"🚀 Staging deployment completed successfully!\\n\\n📦 Version: ${{ github.sha }}\\n🌐 URL: ${{ steps.deploy.outputs.url }}\\n👤 Deployed by: ${{ github.actor }}\", \"parse_mode\": \"HTML\"}"
 
   deploy-production:
     name: Deploy to Production
@@ -167,53 +168,54 @@ jobs:
       url: ${{ steps.deploy.outputs.url }}
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        cache: 'npm'
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
 
-    - name: Install dependencies
-      run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-    - name: Setup Yandex Cloud CLI
-      uses: nightstory/setup-yc@v1
-      with:
-        yc-sa-json-credentials: ${{ secrets.YANDEX_CLOUD_SA_KEY }}
+      - name: Setup Yandex Cloud CLI
+        uses: yc-actions/yc-sls-function@v4.1.0
+        with:
+          yc-sa-json-credentials: ${{ secrets.YANDEX_CLOUD_SA_KEY }}
+          folder-id: ${{ secrets.YANDEX_CLOUD_FOLDER_ID }}
 
-    - name: Login to Yandex Container Registry
-      run: |
-        yc container registry configure-docker
+      - name: Login to Yandex Container Registry
+        run: |
+          yc container registry configure-docker
 
-    - name: Build and push Docker image
-      run: |
-        docker build -t cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop:prod-${{ github.sha }} .
-        docker push cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop:prod-${{ github.sha }}
+      - name: Build and push Docker image
+        run: |
+          docker build -t cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop:prod-${{ github.sha }} .
+          docker push cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop:prod-${{ github.sha }}
 
-    - name: Deploy to Yandex Cloud Serverless Container (Production)
-      id: deploy
-      run: |
-        yc serverless container revision deploy \
-          --container-id ${{ secrets.YANDEX_CLOUD_CONTAINER_PROD_ID }} \
-          --image cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop:prod-${{ github.sha }} \
-          --service-account-id ${{ secrets.YANDEX_CLOUD_SA_ID }} \
-          --environment TELEGRAM_BOT_TOKEN=${{ env.TELEGRAM_BOT_TOKEN }},TELEGRAM_CHAT_ID=${{ env.TELEGRAM_CHAT_ID }},YC_ACCESS_KEY_ID=${{ env.YC_ACCESS_KEY_ID }},YC_SECRET_ACCESS_KEY=${{ env.YC_SECRET_ACCESS_KEY }} \
-          --concurrency 8 \
-          --memory 1GB \
-          --cores 2 \
-          --execution-timeout 30s \
-          --min-instances 1 \
-          --max-instances 5
+      - name: Deploy to Yandex Cloud Serverless Container (Production)
+        id: deploy
+        run: |
+          yc serverless container revision deploy \
+            --container-id ${{ secrets.YANDEX_CLOUD_CONTAINER_PROD_ID }} \
+            --image cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop:prod-${{ github.sha }} \
+            --service-account-id ${{ secrets.YANDEX_CLOUD_SA_ID }} \
+            --environment TELEGRAM_BOT_TOKEN=${{ env.TELEGRAM_BOT_TOKEN }},TELEGRAM_CHAT_ID=${{ env.TELEGRAM_CHAT_ID }},YC_ACCESS_KEY_ID=${{ env.YC_ACCESS_KEY_ID }},YC_SECRET_ACCESS_KEY=${{ env.YC_SECRET_ACCESS_KEY }} \
+            --concurrency 8 \
+            --memory 1GB \
+            --cores 2 \
+            --execution-timeout 30s \
+            --min-instances 1 \
+            --max-instances 5
+          
+          # Get the container URL
+          CONTAINER_URL=$(yc serverless container get ${{ secrets.YANDEX_CLOUD_CONTAINER_PROD_ID }} --format json | jq -r '.url')
+          echo "url=$CONTAINER_URL" >> $GITHUB_OUTPUT
 
-        # Get the container URL
-        CONTAINER_URL=$(yc serverless container get ${{ secrets.YANDEX_CLOUD_CONTAINER_PROD_ID }} --format json | jq -r '.url')
-        echo "url=$CONTAINER_URL" >> $GITHUB_OUTPUT
-
-    - name: Send deployment notification
-      run: |
-        curl -X POST "https://api.telegram.org/bot${{ env.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-          -H "Content-Type: application/json" \
-          -d "{\"chat_id\": \"${{ env.TELEGRAM_CHAT_ID }}\", \"text\": \"🎉 Production deployment completed successfully!\\n\\n📦 Version: ${{ github.sha }}\\n🌐 URL: ${{ steps.deploy.outputs.url }}\\n👤 Deployed by: ${{ github.actor }}\\n\\n✅ Application is live!\", \"parse_mode\": \"HTML\"}"
+      - name: Send deployment notification
+        run: |
+          curl -X POST "https://api.telegram.org/bot${{ env.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -H "Content-Type: application/json" \
+            -d "{\"chat_id\": \"${{ env.TELEGRAM_CHAT_ID }}\", \"text\": \"🎉 Production deployment completed successfully!\\n\\n📦 Version: ${{ github.sha }}\\n🌐 URL: ${{ steps.deploy.outputs.url }}\\n👤 Deployed by: ${{ github.actor }}\\n\\n✅ Application is live!\", \"parse_mode\": \"HTML\"}"
