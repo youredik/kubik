@@ -119,10 +119,11 @@ jobs:
         run: npm ci
 
       - name: Setup Yandex Cloud CLI
-        uses: yc-actions/yc-sls-function@v4.1.0
+        uses: yc-actions/yc-sls-container-deploy@v4
         with:
-          yc-sa-json-credentials: ${{ secrets.YANDEX_CLOUD_SA_KEY }}
-          folder-id: ${{ secrets.YANDEX_CLOUD_FOLDER_ID }}
+          container-name: 'baget-shop-staging'
+          folder-id: 'b1gono5h2jf9fo4fd3c8'
+          revision-image-url: ''
 
       - name: Login to Yandex Container Registry
         run: |
@@ -181,9 +182,11 @@ jobs:
         run: npm ci
 
       - name: Setup Yandex Cloud CLI
-        uses: yc-actions/yc-sls-container-deploy@v4
+        uses: yc-actions/yc-sls-container-deploy@v4.4.1
         with:
-          r
+          container-name: 'baget-shop-staging'
+          folder-id: 'b1gono5h2jf9fo4fd3c8'
+          revision-image-url: ''
 
       - name: Login to Yandex Container Registry
         run: |
