@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 
 interface Product {
@@ -24,7 +24,7 @@ interface CartItem {
   price: number
 }
 
-export default function OrderPage() {
+function OrderPageContent() {
   const searchParams = useSearchParams()
   const [products, setProducts] = useState<Product[]>([])
   const [sizes, setSizes] = useState<Size[]>([])
@@ -557,5 +557,13 @@ export default function OrderPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function OrderPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <OrderPageContent />
+    </Suspense>
   )
 }
