@@ -9,16 +9,13 @@
     "lint": "eslint",
     "test": "jest",
     "test:watch": "jest --watch",
-    "db:seed": "npx prisma db seed",
     "prepare": "husky",
     "pre-push-checks": "npm run lint && npm test && npm audit --audit-level=moderate && (snyk test || echo 'Snyk skipped - no token')"
   },
   "dependencies": {
-    "@prisma/client": "^7.1.0",
     "better-sqlite3": "^12.5.0",
     "date-fns": "^4.1.0",
     "next": "16.0.10",
-    "prisma": "^7.1.0",
     "react": "19.2.1",
     "react-dom": "19.2.1",
     "sharp": "^0.34.5"
@@ -28,6 +25,7 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^20",
     "@types/node-fetch": "^2.6.13",
     "@types/react": "^19",

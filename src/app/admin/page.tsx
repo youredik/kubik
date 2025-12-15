@@ -43,14 +43,14 @@ interface OrderItem {
 
 interface Order {
   id: number
-  orderNumber: string
-  customerName: string
+  order_number: string
+  customer_name: string
   phone: string
-  deliveryType: string
+  delivery_type: string
   address?: string
   comment?: string
-  totalAmount: number
-  createdAt: string
+  total_amount: number
+  created_at: string
   items: OrderItem[]
 }
 

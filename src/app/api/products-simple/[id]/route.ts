@@ -45,9 +45,11 @@ export async function PUT(
     db.close()
 
     return NextResponse.json({
-      ...updatedProduct,
-      images: JSON.parse(updatedProduct.images || '[]'),
-      available: Boolean(updatedProduct.available)
+      id: (updatedProduct as any).id,
+      name: (updatedProduct as any).name,
+      article: (updatedProduct as any).article,
+      images: JSON.parse((updatedProduct as any).images || '[]'),
+      available: Boolean((updatedProduct as any).available)
     })
   } catch (error) {
     console.error('Error updating product:', error)

@@ -12,7 +12,6 @@ const nextConfig: NextConfig = {
   // Experimental features
   experimental: {
     // Enable standalone mode
-    outputFileTracingRoot: undefined,
   },
 
   // Environment variables that should be available at build time
