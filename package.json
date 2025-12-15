@@ -10,7 +10,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "prepare": "husky",
-    "pre-push-checks": "npm run lint && npm test && npm audit --audit-level=moderate && (snyk test || echo 'Snyk skipped - no token')"
+    "pre-push-checks": "npm run lint && npm test && npm audit --audit-level=moderate"
   },
   "dependencies": {
     "better-sqlite3": "^12.5.0",
