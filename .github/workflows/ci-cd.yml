@@ -11,6 +11,8 @@ env:
   YANDEX_CLOUD_FOLDER_ID: ${{ secrets.YANDEX_CLOUD_FOLDER_ID }}
   YANDEX_CLOUD_SERVICE_ACCOUNT_KEY_ID: ${{ secrets.YANDEX_CLOUD_SERVICE_ACCOUNT_KEY_ID }}
   YANDEX_CLOUD_SERVICE_ACCOUNT_KEY: ${{ secrets.YANDEX_CLOUD_SERVICE_ACCOUNT_KEY }}
+  YC_ACCESS_KEY_ID: ${{ secrets.YC_ACCESS_KEY_ID }}
+  YC_SECRET_ACCESS_KEY: ${{ secrets.YC_SECRET_ACCESS_KEY }}
   TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
   TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
 
@@ -137,7 +139,7 @@ jobs:
           --container-id ${{ secrets.YANDEX_CLOUD_CONTAINER_STAGING_ID }} \
           --image cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop:staging-${{ github.sha }} \
           --service-account-id ${{ secrets.YANDEX_CLOUD_SA_ID }} \
-          --environment TELEGRAM_BOT_TOKEN=${{ env.TELEGRAM_BOT_TOKEN }},TELEGRAM_CHAT_ID=${{ env.TELEGRAM_CHAT_ID }} \
+          --environment TELEGRAM_BOT_TOKEN=${{ env.TELEGRAM_BOT_TOKEN }},TELEGRAM_CHAT_ID=${{ env.TELEGRAM_CHAT_ID }},YC_ACCESS_KEY_ID=${{ env.YC_ACCESS_KEY_ID }},YC_SECRET_ACCESS_KEY=${{ env.YC_SECRET_ACCESS_KEY }} \
           --concurrency 4 \
           --memory 512MB \
           --cores 1 \
@@ -198,7 +200,7 @@ jobs:
           --container-id ${{ secrets.YANDEX_CLOUD_CONTAINER_PROD_ID }} \
           --image cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop:prod-${{ github.sha }} \
           --service-account-id ${{ secrets.YANDEX_CLOUD_SA_ID }} \
-          --environment TELEGRAM_BOT_TOKEN=${{ env.TELEGRAM_BOT_TOKEN }},TELEGRAM_CHAT_ID=${{ env.TELEGRAM_CHAT_ID }} \
+          --environment TELEGRAM_BOT_TOKEN=${{ env.TELEGRAM_BOT_TOKEN }},TELEGRAM_CHAT_ID=${{ env.TELEGRAM_CHAT_ID }},YC_ACCESS_KEY_ID=${{ env.YC_ACCESS_KEY_ID }},YC_SECRET_ACCESS_KEY=${{ env.YC_SECRET_ACCESS_KEY }} \
           --concurrency 8 \
           --memory 1GB \
           --cores 2 \

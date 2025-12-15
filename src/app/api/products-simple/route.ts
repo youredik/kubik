@@ -1,15 +1,13 @@
 import { NextResponse } from 'next/server'
-import Database from 'better-sqlite3'
-import path from 'path'
+import { getDb, closeDb } from '@/lib/db'
 
 export async function GET() {
   try {
-    const dbPath = path.join(process.cwd(), 'dev.db')
-    const db = new Database(dbPath)
+    const db = await getDb()
 
     const products = db.prepare('SELECT * FROM products WHERE available = 1 ORDER BY name ASC').all()
 
-    db.close()
+    await closeDb(db)
 
     return NextResponse.json(products)
   } catch (error) {
@@ -27,15 +25,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Name and article are required' }, { status: 400 })
     }
 
-    const dbPath = path.join(process.cwd(), 'dev.db')
-    const db = new Database(dbPath)
+    const db = await getDb()
 
     const result = db.prepare(`
       INSERT INTO products (name, article, images, available)
       VALUES (?, ?, ?, ?)
     `).run(name, article, JSON.stringify(images || []), (available ?? true) ? 1 : 0)
 
-    db.close()
+    await closeDb(db)
 
     return NextResponse.json({
       id: result.lastInsertRowid,

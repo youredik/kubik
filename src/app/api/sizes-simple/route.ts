@@ -1,15 +1,13 @@
 import { NextResponse } from 'next/server'
-import Database from 'better-sqlite3'
-import path from 'path'
+import { getDb, closeDb } from '@/lib/db'
 
 export async function GET() {
   try {
-    const dbPath = path.join(process.cwd(), 'dev.db')
-    const db = new Database(dbPath)
+    const db = await getDb()
 
     const sizes = db.prepare('SELECT * FROM sizes ORDER BY price ASC').all()
 
-    db.close()
+    await closeDb(db)
 
     return NextResponse.json(sizes)
   } catch (error) {
@@ -27,12 +25,11 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: 'Invalid size ID or price' }, { status: 400 })
     }
 
-    const dbPath = path.join(process.cwd(), 'dev.db')
-    const db = new Database(dbPath)
+    const db = await getDb()
 
     const result = db.prepare('UPDATE sizes SET price = ? WHERE id = ?').run(price, id)
 
-    db.close()
+    await closeDb(db)
 
     if (result.changes === 0) {
       return NextResponse.json({ error: 'Size not found' }, { status: 404 })

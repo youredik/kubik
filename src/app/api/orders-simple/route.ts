@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server'
-import Database from 'better-sqlite3'
-import path from 'path'
+import { getDb, closeDb } from '@/lib/db'
 import { sendTelegramNotification } from '@/lib/telegram'
 
 export async function GET() {
   try {
-    const dbPath = path.join(process.cwd(), 'dev.db')
-    const db = new Database(dbPath)
+    const db = await getDb()
 
     const orders = db.prepare(`
       SELECT o.*, GROUP_CONCAT(oi.product_name || '|' || oi.article || '|' || oi.size || '|' || oi.quantity || '|' || oi.price, ';') as items
@@ -25,7 +23,7 @@ export async function GET() {
       }) : []
     }))
 
-    db.close()
+    await closeDb(db)
     return NextResponse.json(transformedOrders)
   } catch (error) {
     console.error('Error fetching orders:', error)
@@ -38,8 +36,7 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { name, phone, deliveryType, address, comment, items, total } = body
 
-    const dbPath = path.join(process.cwd(), 'dev.db')
-    const db = new Database(dbPath)
+    const db = await getDb()
 
     // Generate order number
     const orderCountResult = db.prepare('SELECT COUNT(*) as count FROM orders').get() as { count: number }
@@ -62,7 +59,7 @@ export async function POST(request: Request) {
       `).run(orderId, item.productName, item.article, item.sizeLabel, item.quantity, item.price)
     }
 
-    db.close()
+    await closeDb(db)
 
     // Prepare order data for Telegram notification
     const orderData = {

@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
-import Database from 'better-sqlite3'
-import path from 'path'
+import { getDb, closeDb } from '@/lib/db'
 
 export async function PUT(
   request: Request,
@@ -16,13 +15,12 @@ export async function PUT(
       return NextResponse.json({ error: 'Invalid product ID' }, { status: 400 })
     }
 
-    const dbPath = path.join(process.cwd(), 'dev.db')
-    const db = new Database(dbPath)
+    const db = await getDb()
 
     // Check if product exists
     const existingProduct = db.prepare('SELECT id FROM products WHERE id = ?').get(productId)
     if (!existingProduct) {
-      db.close()
+      await closeDb(db)
       return NextResponse.json({ error: 'Product not found' }, { status: 404 })
     }
 
@@ -42,7 +40,7 @@ export async function PUT(
     // Get updated product
     const updatedProduct = db.prepare('SELECT * FROM products WHERE id = ?').get(productId)
 
-    db.close()
+    await closeDb(db)
 
     return NextResponse.json({
       id: (updatedProduct as any).id,
@@ -69,20 +67,19 @@ export async function DELETE(
       return NextResponse.json({ error: 'Invalid product ID' }, { status: 400 })
     }
 
-    const dbPath = path.join(process.cwd(), 'dev.db')
-    const db = new Database(dbPath)
+    const db = await getDb()
 
     // Check if product exists
     const existingProduct = db.prepare('SELECT id FROM products WHERE id = ?').get(productId)
     if (!existingProduct) {
-      db.close()
+      await closeDb(db)
       return NextResponse.json({ error: 'Product not found' }, { status: 404 })
     }
 
     // Delete product
     db.prepare('DELETE FROM products WHERE id = ?').run(productId)
 
-    db.close()
+    await closeDb(db)
 
     return NextResponse.json({ message: 'Product deleted successfully' })
   } catch (error) {
