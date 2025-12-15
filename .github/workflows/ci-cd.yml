@@ -124,7 +124,7 @@ jobs:
           yc-sa-id: ${{ secrets.YANDEX_CLOUD_SERVICE_ACCOUNT_KEY_ID }}
           container-name: 'baget-shop-staging'
           folder-id: 'b1gono5h2jf9fo4fd3c8'
-          revision-image-url: cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop:staging-${{ github.sha }}
+          revision-image-url: cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop-staging:staging-${{ github.sha }}
           yc-sa-json-credentials: ${{ secrets.YANDEX_CLOUD_SERVICE_ACCOUNT_KEY }}
           revision-service-account-id: ${{ secrets.YANDEX_CLOUD_SERVICE_ACCOUNT_KEY_ID }}
 
@@ -134,15 +134,15 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          docker build -t cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop:staging-${{ github.sha }} .
-          docker push cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop:staging-${{ github.sha }}
+          docker build -t cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop-staging:staging-${{ github.sha }} .
+          docker push cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop-staging:staging-${{ github.sha }}
 
       - name: Deploy to Yandex Cloud Serverless Container (Staging)
         id: deploy
         run: |
           yc serverless container revision deploy \
             --container-id ${{ secrets.YANDEX_CLOUD_CONTAINER_STAGING_ID }} \
-            --image cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop:staging-${{ github.sha }} \
+            --image cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop-staging:staging-${{ github.sha }} \
             --service-account-id ${{ secrets.YANDEX_CLOUD_SA_ID }} \
             --environment TELEGRAM_BOT_TOKEN=${{ env.TELEGRAM_BOT_TOKEN }},TELEGRAM_CHAT_ID=${{ env.TELEGRAM_CHAT_ID }},YC_ACCESS_KEY_ID=${{ env.YC_ACCESS_KEY_ID }},YC_SECRET_ACCESS_KEY=${{ env.YC_SECRET_ACCESS_KEY }} \
             --concurrency 4 \
@@ -190,7 +190,7 @@ jobs:
           yc-sa-id: ${{ secrets.YANDEX_CLOUD_SERVICE_ACCOUNT_KEY_ID }}
           container-name: 'baget-shop-staging'
           folder-id: 'b1gono5h2jf9fo4fd3c8'
-          revision-image-url: cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop:prod-${{ github.sha }}
+          revision-image-url: cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop-prod:prod-${{ github.sha }}
           yc-sa-json-credentials: ${{ secrets.YANDEX_CLOUD_SERVICE_ACCOUNT_KEY }}
           revision-service-account-id: ${{ secrets.YANDEX_CLOUD_SERVICE_ACCOUNT_KEY_ID }}
 
@@ -200,15 +200,15 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          docker build -t cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop:prod-${{ github.sha }} .
-          docker push cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop:prod-${{ github.sha }}
+          docker build -t cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop-prod:prod-${{ github.sha }} .
+          docker push cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop-prod:prod-${{ github.sha }}
 
       - name: Deploy to Yandex Cloud Serverless Container (Production)
         id: deploy
         run: |
           yc serverless container revision deploy \
             --container-id ${{ secrets.YANDEX_CLOUD_CONTAINER_PROD_ID }} \
-            --image cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop:prod-${{ github.sha }} \
+            --image cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop-prod:prod-${{ github.sha }} \
             --service-account-id ${{ secrets.YANDEX_CLOUD_SA_ID }} \
             --environment TELEGRAM_BOT_TOKEN=${{ env.TELEGRAM_BOT_TOKEN }},TELEGRAM_CHAT_ID=${{ env.TELEGRAM_CHAT_ID }},YC_ACCESS_KEY_ID=${{ env.YC_ACCESS_KEY_ID }},YC_SECRET_ACCESS_KEY=${{ env.YC_SECRET_ACCESS_KEY }} \
             --concurrency 8 \
