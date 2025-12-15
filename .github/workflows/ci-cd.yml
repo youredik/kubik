@@ -126,7 +126,7 @@ jobs:
           folder-id: 'b1gono5h2jf9fo4fd3c8'
           revision-image-url: cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop:staging-${{ github.sha }}
           yc-sa-json-credentials: ${{ secrets.YANDEX_CLOUD_SERVICE_ACCOUNT_KEY }}
-          revision-service-account-id: ajeqggpimiudk4bktg4a
+          revision-service-account-id: ${{ secrets.YANDEX_CLOUD_SERVICE_ACCOUNT_KEY_ID }}
 
       - name: Login to Yandex Container Registry
         run: |
@@ -192,7 +192,7 @@ jobs:
           folder-id: 'b1gono5h2jf9fo4fd3c8'
           revision-image-url: cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop:prod-${{ github.sha }}
           yc-sa-json-credentials: ${{ secrets.YANDEX_CLOUD_SERVICE_ACCOUNT_KEY }}
-          revision-service-account-id: ajeqggpimiudk4bktg4a
+          revision-service-account-id: ${{ secrets.YANDEX_CLOUD_SERVICE_ACCOUNT_KEY_ID }}
 
       - name: Login to Yandex Container Registry
         run: |
