@@ -1,0 +1,59 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "node",
+      "args": ["/Users/ed/dev/kubik/mcp-servers/filesystem-server.js", "/Users/ed/dev/kubik"],
+      "env": {
+        "NODE_ENV": "development"
+      }
+    },
+    "terminal": {
+      "command": "node",
+      "args": ["/Users/ed/dev/kubik/mcp-servers/terminal-server.js"],
+      "env": {
+        "NODE_ENV": "development",
+        "ALLOWED_COMMANDS": "ls,cd,pwd,git,npm,node,yarn,pnpm,echo,cat,head,tail,grep,find,ps,kill,chmod,chown,mkdir,rm,touch,cp,mv"
+      }
+    },
+    "web-reader": {
+      "command": "node",
+      "args": ["/Users/ed/dev/kubik/mcp-servers/web-reader-server.js"],
+      "env": {
+        "NODE_ENV": "development",
+        "ALLOWED_DOMAINS": "github.com,stackoverflow.com,developer.mozilla.org,react.dev,nextjs.org,nodejs.org,vercel.com"
+      }
+    },
+    "browser-automation": {
+      "command": "node",
+      "args": ["/Users/ed/dev/kubik/mcp-servers/browser-server.js"],
+      "env": {
+        "NODE_ENV": "development",
+        "PLAYWRIGHT_BROWSERS_PATH": "/tmp/playwright-browsers"
+      }
+    },
+    "github-official": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      }
+    },
+    "web-search-official": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-web-search"],
+      "env": {
+        "WEB_SEARCH_API_KEY": "${WEB_SEARCH_API_KEY}",
+        "WEB_SEARCH_ENGINE": "google"
+      }
+    }
+  },
+  "mcpEnabled": true,
+  "project": {
+    "name": "baget-shop-next",
+    "type": "nextjs",
+    "nodeVersion": "24.12.0",
+    "framework": "Next.js 16",
+    "database": "SQLite + Prisma",
+    "testing": "Jest + React Testing Library"
+  }
+}
