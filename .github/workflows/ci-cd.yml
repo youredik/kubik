@@ -94,7 +94,6 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           args: --file=package.json
-
   deploy-staging:
     name: Deploy to Staging
     runs-on: ubuntu-latest
@@ -117,113 +116,163 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-
-      - name: Setup Yandex Cloud CLI
-        uses: yc-actions/yc-sls-container-deploy@v4.4.0
-        with:
-          yc-sa-id: ${{ secrets.YANDEX_CLOUD_SERVICE_ACCOUNT_KEY_ID }}
-          container-name: 'baget-shop-staging'
-          folder-id: 'b1gono5h2jf9fo4fd3c8'
-          revision-image-url: cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop-staging:hello
-          yc-sa-json-credentials: ${{ secrets.YANDEX_CLOUD_SERVICE_ACCOUNT_KEY }}
-          revision-service-account-id: ${{ secrets.YANDEX_CLOUD_SERVICE_ACCOUNT_KEY_ID }}
-
       - name: Login to Yandex Container Registry
         run: |
           yc container registry configure-docker
 
-      - name: Build and push Docker image
+      - name: Build, tag, and push image to Yandex Cloud Container Registry
+        env:
+          CR_REGISTRY: crp52d5146hh4koo1h15
+          CR_REPOSITORY: baget-shop-staging
+          IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -t cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop-staging:hello .
-          docker push cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop-staging:hello
+          docker build -t cr.yandex/$CR_REGISTRY/$CR_REPOSITORY:$IMAGE_TAG .
+          docker push cr.yandex/$CR_REGISTRY/$CR_REPOSITORY:$IMAGE_TAG
 
-      - name: Deploy to Yandex Cloud Serverless Container (Staging)
-        id: deploy
-        run: |
-          yc serverless container revision deploy \
-            --container-id ${{ secrets.YANDEX_CLOUD_CONTAINER_STAGING_ID }} \
-            --image cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop-staging:hello \
-            --service-account-id ${{ secrets.YANDEX_CLOUD_SA_ID }} \
-            --environment TELEGRAM_BOT_TOKEN=${{ env.TELEGRAM_BOT_TOKEN }},TELEGRAM_CHAT_ID=${{ env.TELEGRAM_CHAT_ID }},YC_ACCESS_KEY_ID=${{ env.YC_ACCESS_KEY_ID }},YC_SECRET_ACCESS_KEY=${{ env.YC_SECRET_ACCESS_KEY }} \
-            --concurrency 4 \
-            --memory 512MB \
-            --cores 1 \
-            --execution-timeout 30s \
-            --min-instances 0 \
-            --max-instances 2
-          
-          # Get the container URL
-          CONTAINER_URL=$(yc serverless container get ${{ secrets.YANDEX_CLOUD_CONTAINER_STAGING_ID }} --format json | jq -r '.url')
-          echo "url=$CONTAINER_URL" >> $GITHUB_OUTPUT
-
-      - name: Send deployment notification
-        run: |
-          curl -X POST "https://api.telegram.org/bot${{ env.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-            -H "Content-Type: application/json" \
-            -d "{\"chat_id\": \"${{ env.TELEGRAM_CHAT_ID }}\", \"text\": \"🚀 Staging deployment completed successfully!\\n\\n📦 Version: ${{ github.sha }}\\n🌐 URL: ${{ steps.deploy.outputs.url }}\\n👤 Deployed by: ${{ github.actor }}\", \"parse_mode\": \"HTML\"}"
-
-  deploy-production:
-    name: Deploy to Production
-    runs-on: ubuntu-latest
-    needs: deploy-staging
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    environment:
-      name: production
-      url: ${{ steps.deploy.outputs.url }}
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Deploy Serverless Container
+        id: deploy-sls-container
+        uses: yc-actions/yc-sls-container-deploy@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          yc-sa-id: ajeac6ecgfapq8ahseno
+          container-name: baget-shop-staging
+          folder-id: bbajn5q2d74c********
+          revision-service-account-id: ajeqnasj95o7********
+          revision-cores: 1
+          revision-memory: 512Mb
+          revision-core-fraction: 100
+          revision-concurrency: 8
+          revision-image-url: cr.yandex/crp52d5146hh4koo1h15/baget-shop-staging:${{ github.sha }}
+          revision-execution-timeout: 10
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Setup Yandex Cloud CLI
-        uses: yc-actions/yc-sls-container-deploy@v4.4.0
-        with:
-          yc-sa-id: ${{ secrets.YANDEX_CLOUD_SERVICE_ACCOUNT_KEY_ID }}
-          container-name: 'baget-shop-staging'
-          folder-id: 'b1gono5h2jf9fo4fd3c8'
-          revision-image-url: cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop-prod:prod-${{ github.sha }}
-          yc-sa-json-credentials: ${{ secrets.YANDEX_CLOUD_SERVICE_ACCOUNT_KEY }}
-          revision-service-account-id: ${{ secrets.YANDEX_CLOUD_SERVICE_ACCOUNT_KEY_ID }}
-
-      - name: Login to Yandex Container Registry
-        run: |
-          yc container registry configure-docker
-
-      - name: Build and push Docker image
-        run: |
-          docker build -t cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop-prod:prod-${{ github.sha }} .
-          docker push cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop-prod:prod-${{ github.sha }}
-
-      - name: Deploy to Yandex Cloud Serverless Container (Production)
-        id: deploy
-        run: |
-          yc serverless container revision deploy \
-            --container-id ${{ secrets.YANDEX_CLOUD_CONTAINER_PROD_ID }} \
-            --image cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop-prod:prod-${{ github.sha }} \
-            --service-account-id ${{ secrets.YANDEX_CLOUD_SA_ID }} \
-            --environment TELEGRAM_BOT_TOKEN=${{ env.TELEGRAM_BOT_TOKEN }},TELEGRAM_CHAT_ID=${{ env.TELEGRAM_CHAT_ID }},YC_ACCESS_KEY_ID=${{ env.YC_ACCESS_KEY_ID }},YC_SECRET_ACCESS_KEY=${{ env.YC_SECRET_ACCESS_KEY }} \
-            --concurrency 8 \
-            --memory 1GB \
-            --cores 2 \
-            --execution-timeout 30s \
-            --min-instances 1 \
-            --max-instances 5
-          
-          # Get the container URL
-          CONTAINER_URL=$(yc serverless container get ${{ secrets.YANDEX_CLOUD_CONTAINER_PROD_ID }} --format json | jq -r '.url')
-          echo "url=$CONTAINER_URL" >> $GITHUB_OUTPUT
-
-      - name: Send deployment notification
-        run: |
-          curl -X POST "https://api.telegram.org/bot${{ env.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-            -H "Content-Type: application/json" \
-            -d "{\"chat_id\": \"${{ env.TELEGRAM_CHAT_ID }}\", \"text\": \"🎉 Production deployment completed successfully!\\n\\n📦 Version: ${{ github.sha }}\\n🌐 URL: ${{ steps.deploy.outputs.url }}\\n👤 Deployed by: ${{ github.actor }}\\n\\n✅ Application is live!\", \"parse_mode\": \"HTML\"}"
+#  deploy-staging:
+#    name: Deploy to Staging
+#    runs-on: ubuntu-latest
+#    needs: [ build, security-scan ]
+#    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+#
+#    environment:
+#      name: staging
+#      url: ${{ steps.deploy.outputs.url }}
+#
+#    steps:
+#      - name: Checkout code
+#        uses: actions/checkout@v4
+#
+#      - name: Setup Node.js
+#        uses: actions/setup-node@v4
+#        with:
+#          node-version: ${{ env.NODE_VERSION }}
+#          cache: 'npm'
+#
+#      - name: Install dependencies
+#        run: npm ci
+#
+#      - name: Setup Yandex Cloud CLI
+#        uses: yc-actions/yc-sls-container-deploy@v4.4.0
+#        with:
+#          yc-sa-id: ${{ secrets.YANDEX_CLOUD_SERVICE_ACCOUNT_KEY_ID }}
+#          container-name: 'baget-shop-staging'
+#          folder-id: 'b1gono5h2jf9fo4fd3c8'
+#          revision-image-url: cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop-staging:staging-${{ github.sha }}
+#          yc-sa-json-credentials: ${{ secrets.YANDEX_CLOUD_SERVICE_ACCOUNT_KEY }}
+#          revision-service-account-id: ${{ secrets.YANDEX_CLOUD_SERVICE_ACCOUNT_KEY_ID }}
+#
+#      - name: Login to Yandex Container Registry
+#        run: |
+#          yc container registry configure-docker
+#
+#      - name: Build and push Docker image
+#        run: |
+#          docker build -t cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop-staging:staging-${{ github.sha }} .
+#          docker push cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop-staging:staging-${{ github.sha }}
+#
+#      - name: Deploy to Yandex Cloud Serverless Container (Staging)
+#        id: deploy
+#        run: |
+#          yc serverless container revision deploy \
+#            --container-id ${{ secrets.YANDEX_CLOUD_CONTAINER_STAGING_ID }} \
+#            --image cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop-staging:staging-${{ github.sha }} \
+#            --service-account-id ${{ secrets.YANDEX_CLOUD_SA_ID }} \
+#            --environment TELEGRAM_BOT_TOKEN=${{ env.TELEGRAM_BOT_TOKEN }},TELEGRAM_CHAT_ID=${{ env.TELEGRAM_CHAT_ID }},YC_ACCESS_KEY_ID=${{ env.YC_ACCESS_KEY_ID }},YC_SECRET_ACCESS_KEY=${{ env.YC_SECRET_ACCESS_KEY }} \
+#            --concurrency 4 \
+#            --memory 512MB \
+#            --cores 1 \
+#            --execution-timeout 30s \
+#            --min-instances 0 \
+#            --max-instances 2
+#
+#          # Get the container URL
+#          CONTAINER_URL=$(yc serverless container get ${{ secrets.YANDEX_CLOUD_CONTAINER_STAGING_ID }} --format json | jq -r '.url')
+#          echo "url=$CONTAINER_URL" >> $GITHUB_OUTPUT
+#
+#      - name: Send deployment notification
+#        run: |
+#          curl -X POST "https://api.telegram.org/bot${{ env.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+#            -H "Content-Type: application/json" \
+#            -d "{\"chat_id\": \"${{ env.TELEGRAM_CHAT_ID }}\", \"text\": \"🚀 Staging deployment completed successfully!\\n\\n📦 Version: ${{ github.sha }}\\n🌐 URL: ${{ steps.deploy.outputs.url }}\\n👤 Deployed by: ${{ github.actor }}\", \"parse_mode\": \"HTML\"}"
+#
+#  deploy-production:
+#    name: Deploy to Production
+#    runs-on: ubuntu-latest
+#    needs: deploy-staging
+#    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+#    environment:
+#      name: production
+#      url: ${{ steps.deploy.outputs.url }}
+#
+#    steps:
+#      - name: Checkout code
+#        uses: actions/checkout@v4
+#
+#      - name: Setup Node.js
+#        uses: actions/setup-node@v4
+#        with:
+#          node-version: ${{ env.NODE_VERSION }}
+#          cache: 'npm'
+#
+#      - name: Install dependencies
+#        run: npm ci
+#
+#      - name: Setup Yandex Cloud CLI
+#        uses: yc-actions/yc-sls-container-deploy@v4.4.0
+#        with:
+#          yc-sa-id: ${{ secrets.YANDEX_CLOUD_SERVICE_ACCOUNT_KEY_ID }}
+#          container-name: 'baget-shop-staging'
+#          folder-id: 'b1gono5h2jf9fo4fd3c8'
+#          revision-image-url: cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop-prod:prod-${{ github.sha }}
+#          yc-sa-json-credentials: ${{ secrets.YANDEX_CLOUD_SERVICE_ACCOUNT_KEY }}
+#          revision-service-account-id: ${{ secrets.YANDEX_CLOUD_SERVICE_ACCOUNT_KEY_ID }}
+#
+#      - name: Login to Yandex Container Registry
+#        run: |
+#          yc container registry configure-docker
+#
+#      - name: Build and push Docker image
+#        run: |
+#          docker build -t cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop-prod:prod-${{ github.sha }} .
+#          docker push cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop-prod:prod-${{ github.sha }}
+#
+#      - name: Deploy to Yandex Cloud Serverless Container (Production)
+#        id: deploy
+#        run: |
+#          yc serverless container revision deploy \
+#            --container-id ${{ secrets.YANDEX_CLOUD_CONTAINER_PROD_ID }} \
+#            --image cr.yandex/${{ secrets.YANDEX_CLOUD_REGISTRY_ID }}/baget-shop-prod:prod-${{ github.sha }} \
+#            --service-account-id ${{ secrets.YANDEX_CLOUD_SA_ID }} \
+#            --environment TELEGRAM_BOT_TOKEN=${{ env.TELEGRAM_BOT_TOKEN }},TELEGRAM_CHAT_ID=${{ env.TELEGRAM_CHAT_ID }},YC_ACCESS_KEY_ID=${{ env.YC_ACCESS_KEY_ID }},YC_SECRET_ACCESS_KEY=${{ env.YC_SECRET_ACCESS_KEY }} \
+#            --concurrency 8 \
+#            --memory 1GB \
+#            --cores 2 \
+#            --execution-timeout 30s \
+#            --min-instances 1 \
+#            --max-instances 5
+#
+#          # Get the container URL
+#          CONTAINER_URL=$(yc serverless container get ${{ secrets.YANDEX_CLOUD_CONTAINER_PROD_ID }} --format json | jq -r '.url')
+#          echo "url=$CONTAINER_URL" >> $GITHUB_OUTPUT
+#
+#      - name: Send deployment notification
+#        run: |
+#          curl -X POST "https://api.telegram.org/bot${{ env.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+#            -H "Content-Type: application/json" \
+#            -d "{\"chat_id\": \"${{ env.TELEGRAM_CHAT_ID }}\", \"text\": \"🎉 Production deployment completed successfully!\\n\\n📦 Version: ${{ github.sha }}\\n🌐 URL: ${{ steps.deploy.outputs.url }}\\n👤 Deployed by: ${{ github.actor }}\\n\\n✅ Application is live!\", \"parse_mode\": \"HTML\"}"
