@@ -136,7 +136,7 @@ jobs:
       - name: Login to Yandex Container Registry
         run: |
           yc container registry configure-docker
-          yc config set folder-id $YC_FOLDER_ID
+          yc config set folder-id b1gono5h2jf9fo4fd3c8
 
       - name: Build, tag, and push image to Yandex Cloud Container Registry
         env:
